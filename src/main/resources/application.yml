@@ -2,5 +2,8 @@ logging.level:
   com.slack.api: DEBUG
 server:
   port: 3000
-rtmUrl: https://slack.com/api/rtm.start?token={token}&simple_latest&no_unreads
-slackBotToken: xoxb-4437907815747-4423590080807-N9qWBp493L90TfWrw7o8wdkm
+rtm:
+  url: https://slack.com/api/rtm.start?token={token}&simple_latest&no_unreads
+slack:
+  signing.secret: replaceWithOwnSecret
+  bot.token: replaceWithOwnBotToken

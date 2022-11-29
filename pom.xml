@@ -31,12 +31,6 @@
 
 		<dependency>
 			<groupId>com.slack.api</groupId>
-			<artifactId>bolt-servlet</artifactId>
-			<version>1.27.1</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.slack.api</groupId>
 			<artifactId>bolt-jetty</artifactId>
 			<version>1.27.1</version>
 		</dependency>
