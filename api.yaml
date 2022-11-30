@@ -1,70 +1,65 @@
-openapi: "3.0.2"
+openapi: 3.0.1
 info:
-  title: API Title
-  version: "0.1"
+  title: NDO Slackbot POC
+  description: NDO Slackbot API
+  version: 0.1.0
 servers:
-  - url: http://localhost:3000
-    description: Local development API
+  - url: http://localhost:3000/
+    description: Local development URL
 paths:
-  /slack/hello:
-      post:
-        tags:
-        - Slack Notifications
-        summary: Say hello
-        description: Posts a greeting for a particular user to the channel corresponding to the webhook
-        operationId: helloSlack
-        requestBody:
+  "/slack/hello":
+    post:
+      tags:
+        - Slack Notification API
+      summary: Say Hello
+      description: Posts a greeting for a particular user to the channel corresponding
+        to the webhook
+      operationId: helloSlack
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/SlackNotificationRequest"
+        required: true
+      responses:
+        '200':
+          description: Successful post
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SlackNotificationRequest'
-        responses:
-          '200':
-            description: Successful post
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Response'
-          '400':
-            description: Bad request
-          '401':
-            description: Unauthorised
-          '403':
-            description: Forbidden
-          '404':
-            description: Not found
-          '500':
-            description: Service failure
+                "$ref": "#/components/schemas/Response"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Response"
+        '401':
+          description: Unauthorised
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Response"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Response"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Response"
+        '500':
+          description: Service error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Response"
 components:
   schemas:
-    MapItem:
-      type: object
-      required:
-      - key
-      - value
-      properties:
-        key:
-          type: string
-        value:
-          type: string
-    Map:
-      properties:
-        default:
-          $ref: '#/components/schemas/MapItem'
-      additionalProperties:
-        $ref: '#/components/schemas/MapItem'
-    Response:
-      required:
-      - statusCode
-      type: object
-      properties:
-        body:
-          type: string
-        contentType:
-          type: string
-        statusCode:
-          type: int
-          format: int32
     SlackNotificationRequest:
       type: object
       properties:
@@ -72,4 +67,19 @@ components:
           type: string
         webhookUrl:
           type: string
-          description: The webhook URL provided by Slack to post messages to a channel.
+    Response:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          format: int32
+        contentType:
+          type: string
+        headers:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        body:
+          type: string

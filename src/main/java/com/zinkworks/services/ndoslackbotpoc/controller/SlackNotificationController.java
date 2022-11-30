@@ -56,7 +56,6 @@ public class SlackNotificationController {
     })
     @PostMapping(AppConstants.HELLO_PATH)
     public Response helloSlack(@RequestBody SlackNotificationRequest request) throws IOException {
-
         WebhookResponse webhookResponse = slackClient.sendMessage("Hello %s".formatted(request.getContent()),
                 request.getWebhookUrl());
 
