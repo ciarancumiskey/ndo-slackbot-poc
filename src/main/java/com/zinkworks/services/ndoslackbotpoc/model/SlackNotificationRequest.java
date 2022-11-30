@@ -9,8 +9,7 @@ public class SlackNotificationRequest {
 
     private String content;
 
-    private String channel;
-
+    //The webhookUrl needs to be kept secret
     private String webhookUrl;
 
     public String getContent() {
@@ -19,14 +18,6 @@ public class SlackNotificationRequest {
 
     public void setContent(String content) {
         this.content = content;
-    }
-
-    public String getChannel() {
-        return channel;
-    }
-
-    public void setChannel(String channel) {
-        this.channel = channel;
     }
 
     public String getWebhookUrl() {
