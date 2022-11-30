@@ -1,0 +1,75 @@
+openapi: "3.0.2"
+info:
+  title: API Title
+  version: "0.1"
+servers:
+  - url: http://localhost:3000
+    description: Local development API
+paths:
+  /slack/hello:
+      post:
+        tags:
+        - Slack Notifications
+        summary: Say hello
+        description: Posts a greeting for a particular user to the channel corresponding to the webhook
+        operationId: helloSlack
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlackNotificationRequest'
+        responses:
+          '200':
+            description: Successful post
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+          '400':
+            description: Bad request
+          '401':
+            description: Unauthorised
+          '403':
+            description: Forbidden
+          '404':
+            description: Not found
+          '500':
+            description: Service failure
+components:
+  schemas:
+    MapItem:
+      type: object
+      required:
+      - key
+      - value
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    Map:
+      properties:
+        default:
+          $ref: '#/components/schemas/MapItem'
+      additionalProperties:
+        $ref: '#/components/schemas/MapItem'
+    Response:
+      required:
+      - statusCode
+      type: object
+      properties:
+        body:
+          type: string
+        contentType:
+          type: string
+        statusCode:
+          type: int
+          format: int32
+    SlackNotificationRequest:
+      type: object
+      properties:
+        content:
+          type: string
+        webhookUrl:
+          type: string
+          description: The webhook URL provided by Slack to post messages to a channel.

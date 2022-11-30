@@ -1,23 +1,59 @@
 package com.zinkworks.services.ndoslackbotpoc.controller;
 
-import com.slack.api.Slack;
 import com.slack.api.bolt.response.Response;
-import com.slack.api.webhook.Payload;
 import com.slack.api.webhook.WebhookResponse;
 import com.zinkworks.services.ndoslackbotpoc.client.SlackClient;
 import com.zinkworks.services.ndoslackbotpoc.constants.AppConstants;
 import com.zinkworks.services.ndoslackbotpoc.model.SlackNotificationRequest;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 
 @RestController
-@RequestMapping(AppConstants.SLACK_PATH)
+@RequestMapping(path = AppConstants.SLACK_PATH)
+@OpenAPIDefinition(info = @Info(title = "NDO Slackbot POC",
+                                version = "0.1.0",
+                                description = "NDO Slackbot API"))
+@Tag(name = "Slack Notification API")
 public class SlackNotificationController {
 
     @Autowired private SlackClient slackClient;
 
+    @Operation(summary = "Say Hello",
+            description = "Posts a greeting for a particular user to the channel corresponding to the webhook")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful post",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = Response.class))),
+            @ApiResponse(responseCode = "404", description = "Not found",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = Response.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorised",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = Response.class))),
+            @ApiResponse(responseCode = "403", description = "Forbidden",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = Response.class))),
+            @ApiResponse(responseCode = "400", description = "Bad request",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = Response.class))),
+            @ApiResponse(responseCode = "500", description = "Service error",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = Response.class))),
+    })
     @PostMapping(AppConstants.HELLO_PATH)
     public Response helloSlack(@RequestBody SlackNotificationRequest request) throws IOException {
 
