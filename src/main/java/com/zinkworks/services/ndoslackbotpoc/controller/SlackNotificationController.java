@@ -32,7 +32,7 @@ import java.util.List;
 @RestController
 @RequestMapping(path = AppConstants.SLACK_PATH)
 @OpenAPIDefinition(info = @Info(title = "NDO Slackbot POC",
-                                version = "0.1.0",
+                                version = "0.2.0",
                                 description = "NDO Slackbot API"))
 @Tag(name = "Slack Notification API")
 public class SlackNotificationController {
@@ -68,9 +68,33 @@ public class SlackNotificationController {
 
         final Response slackResponse = new Response();
         slackResponse.setBody(webhookResponse.getBody());
+        slackResponse.setStatusCode(webhookResponse.getCode());
+        slackResponse.setHeaders(webhookResponse.getHeaders());
         return new ResponseEntity<>(slackResponse, HttpStatus.valueOf(webhookResponse.getCode()));
     }
 
+    @Operation(summary = "Post plain message",
+            description = "Posts a plain message to the channel corresponding to the webhook")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful post",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = Response.class))),
+            @ApiResponse(responseCode = "404", description = "Not found",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = Response.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorised",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = Response.class))),
+            @ApiResponse(responseCode = "403", description = "Forbidden",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = Response.class))),
+            @ApiResponse(responseCode = "400", description = "Bad request",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = Response.class))),
+            @ApiResponse(responseCode = "500", description = "Service error",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = Response.class))),
+    })
     @PostMapping(AppConstants.PLAIN_CARD_PATH)
     public ResponseEntity<Response> plainCardSlackMessage(@RequestBody SlackNotificationRequest request) throws IOException {
         final SectionBlock messageBlock = new SectionBlock();
@@ -81,6 +105,8 @@ public class SlackNotificationController {
 
         final Response slackResponse = new Response();
         slackResponse.setBody(webhookResponse.getBody());
+        slackResponse.setStatusCode(webhookResponse.getCode());
+        slackResponse.setHeaders(webhookResponse.getHeaders());
         return new ResponseEntity<>(slackResponse, HttpStatus.valueOf(webhookResponse.getCode()));
     }
 }
