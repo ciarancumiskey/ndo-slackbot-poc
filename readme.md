@@ -36,3 +36,8 @@ or if you're using Powershell:
   $response | ConvertTo-Json
   ```
 
+## How to test
+0. Create a Slack app at https://api.slack.com/apps and get a webhook URL for it.
+1. Set an environment variable named SLACK_WEBHOOK using that webhook URL.
+2. Run the tests using `mvn clean test` from the project root.
+3. If you want to run tests using your IDE, replace any uses of `TestConstants.ENV_WEBHOOK` in the tests with your webhook URL. **Remember to revert that when committing!**

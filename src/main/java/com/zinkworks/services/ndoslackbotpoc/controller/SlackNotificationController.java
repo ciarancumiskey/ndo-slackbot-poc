@@ -1,6 +1,9 @@
 package com.zinkworks.services.ndoslackbotpoc.controller;
 
 import com.slack.api.bolt.response.Response;
+import com.slack.api.model.block.DividerBlock;
+import com.slack.api.model.block.SectionBlock;
+import com.slack.api.model.block.composition.MarkdownTextObject;
 import com.slack.api.webhook.WebhookResponse;
 import com.zinkworks.services.ndoslackbotpoc.client.SlackClient;
 import com.zinkworks.services.ndoslackbotpoc.constants.AppConstants;
@@ -14,13 +17,17 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping(path = AppConstants.SLACK_PATH)
@@ -55,13 +62,25 @@ public class SlackNotificationController {
                     schema = @Schema(implementation = Response.class))),
     })
     @PostMapping(AppConstants.HELLO_PATH)
-    public Response helloSlack(@RequestBody SlackNotificationRequest request) throws IOException {
+    public ResponseEntity<Response> helloSlack(@RequestBody SlackNotificationRequest request) throws IOException {
         WebhookResponse webhookResponse = slackClient.sendMessage("Hello %s".formatted(request.getContent()),
-                request.getWebhookUrl());
+                request.getWebhookUrl(), new ArrayList<>());
 
         final Response slackResponse = new Response();
-        slackResponse.setStatusCode(webhookResponse.getCode());
         slackResponse.setBody(webhookResponse.getBody());
-        return slackResponse;
+        return new ResponseEntity<>(slackResponse, HttpStatus.valueOf(webhookResponse.getCode()));
+    }
+
+    @PostMapping(AppConstants.PLAIN_CARD_PATH)
+    public ResponseEntity<Response> plainCardSlackMessage(@RequestBody SlackNotificationRequest request) throws IOException {
+        final SectionBlock messageBlock = new SectionBlock();
+        messageBlock.setText(new MarkdownTextObject(request.getContent(), false));
+        //add a divider between this and the next message
+        WebhookResponse webhookResponse = slackClient.sendMessage(request.getContent(),
+                request.getWebhookUrl(), List.of(messageBlock, new DividerBlock()));
+
+        final Response slackResponse = new Response();
+        slackResponse.setBody(webhookResponse.getBody());
+        return new ResponseEntity<>(slackResponse, HttpStatus.valueOf(webhookResponse.getCode()));
     }
 }
