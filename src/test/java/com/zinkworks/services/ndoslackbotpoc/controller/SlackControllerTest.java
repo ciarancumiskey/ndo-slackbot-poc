@@ -5,7 +5,10 @@ import com.google.gson.GsonBuilder;
 import com.slack.api.bolt.response.Response;
 import com.zinkworks.services.ndoslackbotpoc.TestConstants;
 import com.zinkworks.services.ndoslackbotpoc.TestEnvironment;
+import com.zinkworks.services.ndoslackbotpoc.model.AlertRequest;
+import com.zinkworks.services.ndoslackbotpoc.model.Level;
 import com.zinkworks.services.ndoslackbotpoc.model.SlackNotificationRequest;
+import org.eclipse.jetty.http.HttpStatus;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -21,6 +24,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 @SpringBootTest
 @EnableAutoConfiguration
@@ -42,8 +46,8 @@ public class SlackControllerTest {
 
 	@Test
 	public void testPostingHello() throws Exception {
-		final MvcResult helloResult = postSlackMessage(TestConstants.SLACK_PATH + TestConstants.HELLO_PATH,
-						"Tester", this.webhookUrl);
+		final SlackNotificationRequest request = new SlackNotificationRequest("Testing from testPostingHello()", webhookUrl);
+		final MvcResult helloResult = postSlackMessage(TestConstants.SLACK_PATH + TestConstants.HELLO_PATH, request);
 		Assertions.assertNotNull(helloResult);
 		final MockHttpServletResponse response = helloResult.getResponse();
 		Assertions.assertNotNull(response);
@@ -56,8 +60,10 @@ public class SlackControllerTest {
 
 	@Test
 	public void testPostingHelloToWrongWebhook() throws Exception {
-		final MvcResult helloResult = postSlackMessage(TestConstants.SLACK_PATH + TestConstants.HELLO_PATH,
-				"Tester", "https://hooks.slack.com/services/this/totally/wontWork");
+		final SlackNotificationRequest request =
+				new SlackNotificationRequest("Testing from testPostingHelloToWrongWebhook()",
+						TestConstants.INVALID_WEBHOOK_URL);
+		final MvcResult helloResult = postSlackMessage(TestConstants.SLACK_PATH + TestConstants.HELLO_PATH, request);
 		Assertions.assertNotNull(helloResult);
 		final MockHttpServletResponse response = helloResult.getResponse();
 		Assertions.assertEquals(404, response.getStatus());
@@ -69,8 +75,10 @@ public class SlackControllerTest {
 
 	@Test
 	public void testPostingPlainCardMessage() throws Exception {
-		final MvcResult plainCardMessageResult = postSlackMessage(TestConstants.SLACK_PATH + TestConstants.PLAIN_CARD_PATH,
-				"Testing " + ZonedDateTime.now(), this.webhookUrl);
+		final SlackNotificationRequest request =
+				new SlackNotificationRequest("Testing from testPostingPlainCardMessage()", webhookUrl);
+		final MvcResult plainCardMessageResult =
+				postSlackMessage(TestConstants.SLACK_PATH + TestConstants.PLAIN_CARD_PATH, request);
 		Assertions.assertNotNull(plainCardMessageResult);
 		final MockHttpServletResponse response = plainCardMessageResult.getResponse();
 		Assertions.assertEquals(200, response.getStatus());
@@ -82,8 +90,11 @@ public class SlackControllerTest {
 
 	@Test
 	public void testPostingPlainCardMsgToWrongWebhook() throws Exception {
+		final SlackNotificationRequest request =
+				new SlackNotificationRequest("Testing from testPostingPlainCardMsgToWrongWebhook()",
+					TestConstants.INVALID_WEBHOOK_URL);
 		final MvcResult helloResult = postSlackMessage(TestConstants.SLACK_PATH + TestConstants.PLAIN_CARD_PATH,
-				"Testing " + ZonedDateTime.now(), "https://hooks.slack.com/services/this/totally/wontWork");
+				request);
 		Assertions.assertNotNull(helloResult);
 		final MockHttpServletResponse response = helloResult.getResponse();
 		Assertions.assertEquals(404, response.getStatus());
@@ -93,9 +104,92 @@ public class SlackControllerTest {
 		Assertions.assertEquals("no_team", slackResponse.getBody());
 	}
 
-	private MvcResult postSlackMessage(final String endpointPath, final String content, final String webhookUrl)
-			throws Exception {
-		final SlackNotificationRequest request = new SlackNotificationRequest(content, webhookUrl);
+	@Test
+	public void testPostingOperationalAlertMessage() throws Exception {
+		final AlertRequest operationalAlertRequest = new AlertRequest(Level.OPERATIONAL, "Testing Operational Message");
+		operationalAlertRequest.setWebhookUrl(this.webhookUrl);
+		operationalAlertRequest.setContent("Everything's fine, this is just a test.");
+		final MvcResult operationalAlertMessageResult =
+				postSlackMessage(TestConstants.SLACK_PATH + TestConstants.ALERT_PATH, operationalAlertRequest);
+		Assertions.assertNotNull(operationalAlertMessageResult);
+		final MockHttpServletResponse operationalResultResponse = operationalAlertMessageResult.getResponse();
+		Assertions.assertEquals(200, operationalResultResponse.getStatus());
+
+		final String operationalResponseContent = operationalResultResponse.getContentAsString();
+		final Response operationalSlackResponse = g.fromJson(operationalResponseContent, Response.class);
+		Assertions.assertEquals("ok", operationalSlackResponse.getBody());
+	}
+
+	@Test
+	public void testPostingWarningAlertMessage() throws Exception {
+		final AlertRequest warningAlertRequest = new AlertRequest(Level.WARN, "Testing Warning Message");
+		warningAlertRequest.setWebhookUrl(this.webhookUrl);
+		warningAlertRequest.setContent("Don't be alarmed, this is just a test.");
+		final MvcResult warningAlertMessageResult =
+				postSlackMessage(TestConstants.SLACK_PATH + TestConstants.ALERT_PATH, warningAlertRequest);
+		Assertions.assertNotNull(warningAlertMessageResult);
+		final MockHttpServletResponse warningResultResponse = warningAlertMessageResult.getResponse();
+		Assertions.assertEquals(200, warningResultResponse.getStatus());
+
+		final String warningResultContent = warningResultResponse.getContentAsString();
+		final Response warningSlackResponse = g.fromJson(warningResultContent, Response.class);
+		Assertions.assertEquals("ok", warningSlackResponse.getBody());
+	}
+
+	@Test
+	public void testPostingErrorAlertMessage() throws Exception {
+		final AlertRequest errorAlertRequest = new AlertRequest(Level.ERROR, "Testing Error Message");
+		errorAlertRequest.setWebhookUrl(this.webhookUrl);
+		errorAlertRequest.setContent("Test error message sent from testPostingErrorAlertMessage()");
+		final MvcResult errorAlertMessageResult =
+				postSlackMessage(TestConstants.SLACK_PATH + TestConstants.ALERT_PATH, errorAlertRequest);
+		Assertions.assertNotNull(errorAlertMessageResult);
+		final MockHttpServletResponse errorResultResponse = errorAlertMessageResult.getResponse();
+		Assertions.assertEquals(200, errorResultResponse.getStatus());
+
+		final String errorResultContent = errorResultResponse.getContentAsString();
+		final Response errorSlackResponse = g.fromJson(errorResultContent, Response.class);
+		Assertions.assertEquals("ok", errorSlackResponse.getBody());
+	}
+
+	@Test
+	public void testPostingAlertMessageWithoutLevel() throws Exception {
+		final AlertRequest missingLevelAlertRequest = new AlertRequest();
+		missingLevelAlertRequest.setWebhookUrl(this.webhookUrl);
+		missingLevelAlertRequest.setTitle("This alert message is missing a level");
+		final MvcResult missingLevelMessageResult = postSlackMessage(
+				TestConstants.SLACK_PATH + TestConstants.ALERT_PATH, missingLevelAlertRequest);
+		Assertions.assertNotNull(missingLevelMessageResult);
+		final MockHttpServletResponse missingLevelResponse = missingLevelMessageResult.getResponse();
+		Assertions.assertEquals(HttpStatus.BAD_REQUEST_400, missingLevelResponse.getStatus());
+	}
+
+	@Test
+	public void testPostingAlertMessageWithoutTitle() throws Exception {
+		final AlertRequest missingTitleAlertRequest = new AlertRequest();
+		missingTitleAlertRequest.setWebhookUrl(this.webhookUrl);
+		missingTitleAlertRequest.setLevel(Level.ERROR);
+		final MvcResult missingTitleMessageResult = postSlackMessage(
+				TestConstants.SLACK_PATH + TestConstants.ALERT_PATH, missingTitleAlertRequest);
+		Assertions.assertNotNull(missingTitleMessageResult);
+		final MockHttpServletResponse missingTitleResponse = missingTitleMessageResult.getResponse();
+		Assertions.assertEquals(HttpStatus.BAD_REQUEST_400, missingTitleResponse.getStatus());
+	}
+
+	@Test
+	public void testPostingAlertMessageWithoutWebhook() throws Exception {
+		final AlertRequest missingWebhookUrlRequest = new AlertRequest();
+		missingWebhookUrlRequest.setTitle("This alert message is missing a webhook URL");
+		missingWebhookUrlRequest.setLevel(Level.ERROR);
+		MvcResult missingWebhookUrlMessageResult = postSlackMessage(
+				TestConstants.SLACK_PATH + TestConstants.ALERT_PATH, missingWebhookUrlRequest);
+		Assertions.assertNotNull(missingWebhookUrlMessageResult);
+		final MockHttpServletResponse missingWebhookUrlResponse = missingWebhookUrlMessageResult.getResponse();
+		Assertions.assertEquals(HttpStatus.BAD_REQUEST_400, missingWebhookUrlResponse.getStatus());
+	}
+
+	private MvcResult postSlackMessage(final String endpointPath,
+									   final SlackNotificationRequest request) throws Exception {
 		return mockMvc.perform(
 						MockMvcRequestBuilders.post(endpointPath)
 								.contentType(MediaType.APPLICATION_JSON_VALUE)

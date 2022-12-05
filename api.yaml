@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: NDO Slackbot POC
   description: NDO Slackbot API
-  version: 0.2.0
+  version: 0.3.0
 servers:
   - url: http://localhost:3000/
     description: Local development URL
@@ -108,10 +108,79 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Response"
+  "/slack/alert":
+    post:
+      tags:
+        - Slack Notification API
+      summary: Post alert message
+      description: Posts an alert message to the channel corresponding to the webhook
+      operationId: postAlertMessage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/AlertRequest"
+        required: true
+      responses:
+        '200':
+          description: Alert successfully posted
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Response"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Response"
+        '401':
+          description: Unauthorised
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Response"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Response"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Response"
+        '500':
+          description: Service error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Response"
 components:
   schemas:
+    AlertRequest:
+      allOf:
+        - $ref: '#/components/schemas/SlackNotificationRequest'
+        - type: object
+          required:
+            - title
+            - level
+            - webhookUrl
+          properties:
+            level:
+              type: string
+              enum:
+                - ERROR
+                - WARN
+                - OPERATIONAL
+            title:
+              type: string
     SlackNotificationRequest:
       type: object
+      required:
+        - webhookUrl
       properties:
         content:
           type: string
